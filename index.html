@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚠️ УВАГА! Ви потрапили на клікбейт</title>
+    <script src="https://t.contentsquare.net/uxa/3fb182cdb1d3b.js" defer></script>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 700px;
+            margin: 40px auto;
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 2px solid #ef4444;
+        }
+        h1 {
+            color: #ef4444;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        p.subtitle {
+            font-size: 18px;
+            color: #cbd5e1;
+            margin-bottom: 30px;
+        }
+        .data-box {
+            text-align: left;
+            background: #0f172a;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 5px solid #3b82f6;
+            margin-bottom: 20px;
+        }
+        .data-item {
+            margin: 12px 0;
+            font-size: 16px;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 8px;
+        }
+        .data-item span {
+            font-weight: bold;
+            color: #60a5fa;
+        }
+        .warning-footer {
+            font-size: 14px;
+            color: #94a3b8;
+            margin-top: 30px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>⚠️ ВИ ПОПАЛИСЬ НА КЛІКБЕЙТ!</h1>
+        <p class="subtitle">Ось що будь-який сайт може дізнатися про вас усього за 1 клік (без жодних дозволів):</p>
+        
+        <div class="data-box">
+            <div class="data-item">🌐 Ваша IP-адреса: <span id="ip">Завантаження...</span></div>
+            <div class="data-item">📍 Країна та місто: <span id="location">Завантаження...</span></div>
+            <div class="data-item">🏢 Інтернет-провайдер: <span id="isp">Завантаження...</span></div>
+            <div class="data-item">📱 Операційна система та браузер: <span id="browser">Завантаження...</span></div>
+            <div class="data-item">🖥️ Роздільна здатність екрану: <span id="screen">Завантаження...</span></div>
+            <div class="data-item">🌍 Мова вашого пристрою: <span id="lang">Завантаження...</span></div>
+            <div class="data-item">⏰ Часовий пояс та час: <span id="timezone">Завантаження...</span></div>
+            <div class="data-item">🔋 Кількість ядер процесора: <span id="cores">Завантаження...</span></div>
+        </div>
+
+        <p class="warning-footer">
+            Ця сторінка створена в навчальних цілях для демонстрації цифрової гігієни. Ваші дані не зберігаються на сервері, але аналітичні системи вже зафіксували рух вашої мишки та тривалість перебування тут. Будьте пильними в інтернеті!
+        </p>
+    </div>
+
+    <script>
+        // 1. Базова інформація з браузера
+        document.getElementById('browser').innerText = navigator.userAgent;
+        document.getElementById('screen').innerText = `${window.screen.width} x ${window.screen.height} (вікно: ${window.innerWidth} x ${window.innerHeight})`;
+        document.getElementById('lang').innerText = navigator.language || navigator.userLanguage;
+        
+        const now = new Date();
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        document.getElementById('timezone').innerText = `${tz} (${now.toLocaleTimeString()})`;
+        document.getElementById('cores').innerText = `${navigator.hardwareConcurrency || 'Невідомо'} ядер`;
+
+        // 2. Отримання IP та локації через безкоштовне API (без запиту геопозиції)
+        fetch('https://ipapi.co/json/')
+            .then(response => response.json())
+            .then(data => {
+                if(data.error) {
+                    setAdblockWarning();
+                } else {
+                    document.getElementById('ip').innerText = data.ip || 'Приховано';
+                    document.getElementById('location').innerText = `${data.country_name || ''}, ${data.city || 'Невідомо'}`;
+                    document.getElementById('isp').innerText = data.org || 'Невідомо';
+                }
+            })
+            .catch(error => {
+                console.log('Помилка запиту або увімкнено AdBlock:', error);
+                setAdblockWarning();
+            });
+
+        function setAdblockWarning() {
+            document.getElementById('ip').innerText = "Заблоковано вашим AdBlock";
+            document.getElementById('location').innerText = "Неможливо визначити через захист браузера";
+            document.getElementById('isp').innerText = "Блокувальник реклами приховав провайдера";
+        }
+    </script>
+
+</body>
+</html>
