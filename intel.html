@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔓 Ваш профіль зібрано</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0a0a;
+            color: #f8fafc;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 30px auto;
+            background: #1a1a2e;
+            padding: 30px;
+            border-radius: 12px;
+            border: 2px solid #dc2626;
+            box-shadow: 0 0 30px rgba(220, 38, 38, 0.3);
+        }
+        h1 {
+            color: #dc2626;
+            font-size: 26px;
+            text-align: center;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .alert-box {
+            background: #450a0a;
+            border: 1px solid #dc2626;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+            font-size: 18px;
+            line-height: 1.6;
+        }
+        .section {
+            margin: 20px 0;
+        }
+        .section h2 {
+            color: #f87171;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 8px;
+        }
+        .data-grid {
+            display: grid;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 15px;
+            padding: 8px 12px;
+            background: #0f172a;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .data-row .label {
+            color: #94a3b8;
+            flex-shrink: 0;
+            min-width: 180px;
+        }
+        .data-row .value {
+            color: #fbbf24;
+            text-align: right;
+            word-break: break-all;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+        }
+        .footer-note {
+            text-align: center;
+            color: #64748b;
+            font-size: 13px;
+            font-style: italic;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #334155;
+        }
+        .back-btn {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #94a3b8;
+        }
+        .scanning {
+            text-align: center;
+            color: #22d3ee;
+            font-family: monospace;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔓 ПРОФІЛЬ ЦІЛІ ЗІБРАНО</h1>
+
+        <div class="alert-box">
+            <strong>Ваша інформація у нас вже є.</strong><br>
+            Покажемо детальніше на наступному занятті з кібербезпеки.
+        </div>
+
+        <div class="scanning" id="scanStatus">▸ Сканування пристрою...</div>
+
+        <div id="results" style="display:none;"></div>
+
+        <p class="footer-note">
+            ⚠️ Навчальна демонстрація: усі дані зібрані лише у вашому браузері (client-side) і не відправляються на сервер.
+            На наступному занятті ми розберемо кожну з цих технік.
+        </p>
+
+        <a href="index.html" class="back-btn">← Повернутися</a>
+    </div>
+
+    <script>
+        const results = document.getElementById('results');
+        const scanStatus = document.getElementById('scanStatus');
+        const collected = {};
+
+        function addSection(title, items) {
+            const section = document.createElement('div');
+            section.className = 'section';
+            section.innerHTML = `<h2>${title}</h2><div class="data-grid"></div>`;
+            const grid = section.querySelector('.data-grid');
+            for (const [label, value] of Object.entries(items)) {
+                if (value === undefined || value === null || value === '') continue;
+                const row = document.createElement('div');
+                row.className = 'data-row';
+                row.innerHTML = `<span class="label">${label}</span><span class="value">${value}</span>`;
+                grid.appendChild(row);
+            }
+            if (grid.children.length > 0) results.appendChild(section);
+        }
+
+        // --- Canvas fingerprint ---
+        function getCanvasFingerprint() {
+            try {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 280; canvas.height = 60;
+                ctx.textBaseline = 'top';
+                ctx.font = '14px Arial';
+                ctx.fillStyle = '#f60';
+                ctx.fillRect(0, 0, 280, 60);
+                ctx.fillStyle = '#069';
+                ctx.fillText('CyberSec UA 🎯', 2, 15);
+                ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
+                ctx.fillText('fingerprint', 4, 35);
+                const data = canvas.toDataURL();
+                let hash = 0;
+                for (let i = 0; i < data.length; i++) {
+                    hash = ((hash << 5) - hash) + data.charCodeAt(i);
+                    hash |= 0;
+                }
+                return '0x' + Math.abs(hash).toString(16).toUpperCase();
+            } catch { return 'Недоступно'; }
+        }
+
+        // --- WebGL fingerprint ---
+        function getWebGLInfo() {
+            try {
+                const canvas = document.createElement('canvas');
+                const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                if (!gl) return {};
+                const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+                return {
+                    'WebGL Vendor': dbg ? gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL) : gl.getParameter(gl.VENDOR),
+                    'WebGL Renderer': dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER),
+                };
+            } catch { return {}; }
+        }
+
+        // --- Audio fingerprint ---
+        function getAudioFingerprint() {
+            return new Promise(resolve => {
+                try {
+                    const ctx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, 44100, 44100);
+                    const osc = ctx.createOscillator();
+                    osc.type = 'triangle';
+                    osc.frequency.value = 10000;
+                    const comp = ctx.createDynamicsCompressor();
+                    osc.connect(comp);
+                    comp.connect(ctx.destination);
+                    osc.start(0);
+                    ctx.startRendering();
+                    ctx.oncomplete = e => {
+                        const buf = e.renderedBuffer.getChannelData(0);
+                        let sum = 0;
+                        for (let i = 4500; i < 5000; i++) sum += Math.abs(buf[i]);
+                        resolve('0x' + Math.abs(Math.floor(sum * 10000)).toString(16).toUpperCase());
+                    };
+                } catch { resolve('Недоступно'); }
+            });
+        }
+
+        // --- WebRTC local IP leak ---
+        function getLocalIPs() {
+            return new Promise(resolve => {
+                const ips = new Set();
+                try {
+                    const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+                    pc.createDataChannel('');
+                    pc.createOffer().then(offer => pc.setLocalDescription(offer));
+                    pc.onicecandidate = e => {
+                        if (!e.candidate) {
+                            pc.close();
+                            resolve([...ips].join(', ') || 'Приховано VPN/браузером');
+                            return;
+                        }
+                        const m = e.candidate.candidate.match(/([0-9]{1,3}\.){3}[0-9]{1,3}/);
+                        if (m) ips.add(m[0]);
+                    };
+                    setTimeout(() => { pc.close(); resolve([...ips].join(', ') || 'Приховано VPN/браузером'); }, 3000);
+                } catch { resolve('Недоступно'); }
+            });
+        }
+
+        // --- Font detection ---
+        function detectFonts() {
+            const base = ['monospace', 'sans-serif', 'serif'];
+            const test = ['Arial', 'Verdana', 'Times New Roman', 'Courier New', 'Georgia', 'Comic Sans MS', 'Impact', 'Trebuchet MS', 'Palatino', 'Tahoma', 'Segoe UI'];
+            const detected = [];
+            const body = document.body;
+            const span = document.createElement('span');
+            span.style.cssText = 'position:absolute;left:-9999px;font-size:72px';
+            span.textContent = 'mmmmmmmmmmlli';
+            body.appendChild(span);
+            const baseWidths = {};
+            base.forEach(f => { span.style.fontFamily = f; baseWidths[f] = span.offsetWidth; });
+            test.forEach(font => {
+                let found = false;
+                base.forEach(f => {
+                    span.style.fontFamily = `'${font}', ${f}`;
+                    if (span.offsetWidth !== baseWidths[f]) found = true;
+                });
+                if (found) detected.push(font);
+            });
+            body.removeChild(span);
+            return detected.join(', ') || 'Не визначено';
+        }
+
+        // --- AdBlock detection ---
+        function detectAdBlock() {
+            const bait = document.createElement('div');
+            bait.className = 'adsbox pub_300x250 pub_300x250m pub_728x90 text-ad textAd text_ad text_ads text-ads text-ad-links';
+            bait.style.cssText = 'width:1px;height:1px;position:absolute;left:-9999px;';
+            document.body.appendChild(bait);
+            const blocked = bait.offsetHeight === 0;
+            document.body.removeChild(bait);
+            return blocked ? 'Так (виявлено)' : 'Ні';
+        }
+
+        // --- Storage estimate ---
+        async function getStorageInfo() {
+            try {
+                if (navigator.storage && navigator.storage.estimate) {
+                    const est = await navigator.storage.estimate();
+                    const used = est.usage ? (est.usage / 1048576).toFixed(1) + ' МБ' : '?';
+                    const quota = est.quota ? (est.quota / 1073741824).toFixed(1) + ' ГБ' : '?';
+                    return { 'Сховище використано': used, 'Квота сховища': quota };
+                }
+            } catch {}
+            return {};
+        }
+
+        // --- Battery ---
+        async function getBatteryInfo() {
+            try {
+                if (navigator.getBattery) {
+                    const bat = await navigator.getBattery();
+                    return {
+                        'Заряд батареї': Math.round(bat.level * 100) + '%',
+                        'Заряджається': bat.charging ? 'Так' : 'Ні',
+                    };
+                }
+            } catch {}
+            return {};
+        }
+
+        // --- Media devices ---
+        async function getMediaDevices() {
+            try {
+                if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    const counts = { audioinput: 0, audiooutput: 0, videoinput: 0 };
+                    devices.forEach(d => { if (counts[d.kind] !== undefined) counts[d.kind]++; });
+                    return {
+                        'Мікрофони': counts.audioinput,
+                        'Динаміки/навушники': counts.audiooutput,
+                        'Камери': counts.videoinput,
+                    };
+                }
+            } catch {}
+            return {};
+        }
+
+        // --- Plugins ---
+        function getPlugins() {
+            const plugins = [];
+            for (let i = 0; i < navigator.plugins.length; i++) {
+                plugins.push(navigator.plugins[i].name);
+            }
+            return plugins.length ? plugins.join(', ') : 'Приховано браузером';
+        }
+
+        // --- Behavioral data from sessionStorage ---
+        function getBehavioralData() {
+            try {
+                const raw = sessionStorage.getItem('cybersec_behavior');
+                return raw ? JSON.parse(raw) : {};
+            } catch { return {}; }
+        }
+
+        async function runFullScan() {
+            const behavioral = getBehavioralData();
+
+            // Network / IP
+            let ipData = {};
+            try {
+                const res = await fetch('https://ipapi.co/json/');
+                ipData = await res.json();
+            } catch {}
+
+            const localIPs = await getLocalIPs();
+            const audioFP = await getAudioFingerprint();
+            const storageInfo = await getStorageInfo();
+            const batteryInfo = await getBatteryInfo();
+            const mediaInfo = await getMediaDevices();
+            const webgl = getWebGLInfo();
+            const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+
+            addSection('🌐 Мережева розвідка (OSINT)', {
+                'Публічна IP': ipData.ip || '—',
+                'Локальні IP (WebRTC)': localIPs,
+                'Країна / Місто': `${ipData.country_name || '—'}, ${ipData.city || '—'}`,
+                'Регіон': ipData.region || '—',
+                'Поштовий індекс': ipData.postal || '—',
+                'Координати (приблизно)': ipData.latitude ? `${ipData.latitude}, ${ipData.longitude}` : '—',
+                'ISP / Організація': ipData.org || '—',
+                'ASN': ipData.asn || '—',
+                'Тип з\'єднання': conn ? conn.effectiveType : '—',
+                'Швидкість (downlink)': conn ? conn.downlink + ' Мбіт/с' : '—',
+                'RTT затримка': conn ? conn.rtt + ' мс' : '—',
+                'Онлайн': navigator.onLine ? 'Так' : 'Ні',
+            });
+
+            addSection('🖥️ Апаратний відбиток (Hardware Fingerprint)', {
+                'User-Agent': navigator.userAgent,
+                'Платформа': navigator.platform,
+                'Vendor': navigator.vendor,
+                'Ядра CPU': navigator.hardwareConcurrency,
+                'Оперативна пам\'ять': navigator.deviceMemory ? navigator.deviceMemory + ' ГБ' : 'Приховано',
+                'Екран': `${screen.width}x${screen.height} @${window.devicePixelRatio}x`,
+                'Глибина кольору': screen.colorDepth + ' біт',
+                'Вікно браузера': `${window.innerWidth}x${window.innerHeight}`,
+                'Touch-точки': navigator.maxTouchPoints || 0,
+                'PDF Viewer': navigator.pdfViewerEnabled ?? '—',
+                ...webgl,
+            });
+
+            addSection('🔬 Цифровий відбиток (Browser Fingerprinting)', {
+                'Canvas FP': getCanvasFingerprint(),
+                'Audio FP': audioFP,
+                'Виявлені шрифти': detectFonts(),
+                'Мови': navigator.languages ? navigator.languages.join(', ') : navigator.language,
+                'Часовий пояс': Intl.DateTimeFormat().resolvedOptions().timeZone,
+                'Timezone offset': 'UTC' + (new Date().getTimezoneOffset() > 0 ? '-' : '+') + Math.abs(new Date().getTimezoneOffset() / 60),
+                'Cookies увімкнено': navigator.cookieEnabled ? 'Так' : 'Ні',
+                'Do Not Track': navigator.doNotTrack || 'Не встановлено',
+                'AdBlock': detectAdBlock(),
+                'WebDriver (бот?)': navigator.webdriver ? '⚠️ ТАК' : 'Ні',
+                'Плагіни': getPlugins(),
+            });
+
+            addSection('💾 Сховище та можливості', {
+                'localStorage': typeof localStorage !== 'undefined' ? 'Доступний' : 'Ні',
+                'sessionStorage': typeof sessionStorage !== 'undefined' ? 'Доступний' : 'Ні',
+                'IndexedDB': !!window.indexedDB ? 'Доступний' : 'Ні',
+                'Service Worker': 'serviceWorker' in navigator ? 'Підтримується' : 'Ні',
+                'WebGL': !!document.createElement('canvas').getContext('webgl') ? 'Так' : 'Ні',
+                'WebRTC': !!window.RTCPeerConnection ? 'Так' : 'Ні',
+                ...storageInfo,
+            });
+
+            if (Object.keys(batteryInfo).length) {
+                addSection('🔋 Батарея', batteryInfo);
+            }
+
+            if (Object.keys(mediaInfo).length) {
+                addSection('📷 Медіа-пристрої', mediaInfo);
+            }
+
+            addSection('🕵️ Поведінковий аналіз (на головній сторінці)', {
+                'Час на сторінці': behavioral.timeOnPage ? behavioral.timeOnPage + ' сек' : '—',
+                'Рухи миші': behavioral.mouseMoves ?? '—',
+                'Кліки': behavioral.clicks ?? '—',
+                'Прокрутка (px)': behavioral.maxScroll ?? '—',
+                'Referrer (звідки прийшли)': document.referrer || 'Прямий захід',
+                'URL сторінки': window.location.href,
+            });
+
+            scanStatus.style.display = 'none';
+            results.style.display = 'block';
+        }
+
+        runFullScan();
+    </script>
+</body>
+</html>

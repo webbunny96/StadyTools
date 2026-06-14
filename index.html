@@ -58,6 +58,43 @@
             margin-top: 30px;
             font-style: italic;
         }
+        .buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        .btn {
+            padding: 16px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        .btn-admit {
+            background: #22c55e;
+            color: #0f172a;
+        }
+        .btn-admit:hover { background: #16a34a; }
+        .btn-deny {
+            background: #1e293b;
+            color: #f87171;
+            border: 2px solid #dc2626;
+        }
+        .btn-deny:hover {
+            background: #450a0a;
+            color: #fca5a5;
+        }
+        @media (min-width: 500px) {
+            .buttons { flex-direction: row; }
+            .btn { flex: 1; }
+        }
     </style>
 </head>
 <body>
@@ -77,12 +114,47 @@
             <div class="data-item">🔋 Кількість ядер процесора: <span id="cores">Завантаження...</span></div>
         </div>
 
+        <div class="buttons">
+            <button class="btn btn-admit" onclick="window.location.href='encouragement.html'">
+                ✅ Я визнаю провину, буду уважніше
+            </button>
+            <button class="btn btn-deny" id="btnDeny">
+                🚫 Я ніколи не признаюсь
+            </button>
+        </div>
+
         <p class="warning-footer">
             Ця сторінка створена в навчальних цілях для демонстрації цифрової гігієни. Ваші дані не зберігаються на сервері, але аналітичні системи вже зафіксували рух вашої мишки та тривалість перебування тут. Будьте пильними в інтернеті!
         </p>
     </div>
 
     <script>
+        // Поведінковий трекінг для навчальної демонстрації
+        const behavior = {
+            startTime: Date.now(),
+            mouseMoves: 0,
+            clicks: 0,
+            maxScroll: 0
+        };
+
+        document.addEventListener('mousemove', () => behavior.mouseMoves++);
+        document.addEventListener('click', () => behavior.clicks++);
+        window.addEventListener('scroll', () => {
+            behavior.maxScroll = Math.max(behavior.maxScroll, window.scrollY);
+        });
+
+        function saveBehavior() {
+            behavior.timeOnPage = Math.round((Date.now() - behavior.startTime) / 1000);
+            sessionStorage.setItem('cybersec_behavior', JSON.stringify(behavior));
+        }
+
+        document.getElementById('btnDeny').addEventListener('click', () => {
+            saveBehavior();
+            window.location.href = 'intel.html';
+        });
+
+        window.addEventListener('beforeunload', saveBehavior);
+
         // 1. Базова інформація з браузера
         document.getElementById('browser').innerText = navigator.userAgent;
         document.getElementById('screen').innerText = `${window.screen.width} x ${window.screen.height} (вікно: ${window.innerWidth} x ${window.innerHeight})`;
