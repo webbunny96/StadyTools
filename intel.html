@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🔓 Ваш профіль зібрано</title>
+    <script src="geo.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -325,12 +326,8 @@
         async function runFullScan() {
             const behavioral = getBehavioralData();
 
-            // Network / IP
-            let ipData = {};
-            try {
-                const res = await fetch('https://ipapi.co/json/');
-                ipData = await res.json();
-            } catch {}
+            // Мережа: спочатку кеш з головної, потім fallback-API
+            const ipData = (await getGeoData()) || {};
 
             const localIPs = await getLocalIPs();
             const audioFP = await getAudioFingerprint();
@@ -349,6 +346,7 @@
                 'Координати (приблизно)': ipData.latitude ? `${ipData.latitude}, ${ipData.longitude}` : '—',
                 'ISP / Організація': ipData.org || '—',
                 'ASN': ipData.asn || '—',
+                'Джерело даних': ipData.source || '—',
                 'Тип з\'єднання': conn ? conn.effectiveType : '—',
                 'Швидкість (downlink)': conn ? conn.downlink + ' Мбіт/с' : '—',
                 'RTT затримка': conn ? conn.rtt + ' мс' : '—',

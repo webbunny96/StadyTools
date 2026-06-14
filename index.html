@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>⚠️ УВАГА! Ви потрапили на клікбейт</title>
+    <script src="geo.js"></script>
     <script src="https://t.contentsquare.net/uxa/3fb182cdb1d3b.js" defer></script>
 
     <style>
@@ -148,8 +149,12 @@
             sessionStorage.setItem('cybersec_behavior', JSON.stringify(behavior));
         }
 
-        document.getElementById('btnDeny').addEventListener('click', () => {
+        document.getElementById('btnDeny').addEventListener('click', async () => {
             saveBehavior();
+            const btn = document.getElementById('btnDeny');
+            btn.disabled = true;
+            btn.textContent = '⏳ Збираємо дані...';
+            await getGeoData();
             window.location.href = 'intel.html';
         });
 
@@ -165,27 +170,21 @@
         document.getElementById('timezone').innerText = `${tz} (${now.toLocaleTimeString()})`;
         document.getElementById('cores').innerText = `${navigator.hardwareConcurrency || 'Невідомо'} ядер`;
 
-        // 2. Отримання IP та локації через безкоштовне API (без запиту геопозиції)
-        fetch('https://ipapi.co/json/')
-            .then(response => response.json())
-            .then(data => {
-                if(data.error) {
-                    setAdblockWarning();
-                } else {
-                    document.getElementById('ip').innerText = data.ip || 'Приховано';
-                    document.getElementById('location').innerText = `${data.country_name || ''}, ${data.city || 'Невідомо'}`;
-                    document.getElementById('isp').innerText = data.org || 'Невідомо';
-                }
-            })
-            .catch(error => {
-                console.log('Помилка запиту або увімкнено AdBlock:', error);
-                setAdblockWarning();
-            });
+        // 2. IP та геолокація (кілька джерел, сумісно з GitHub Pages)
+        getGeoData().then(data => {
+            if (data) {
+                document.getElementById('ip').innerText = data.ip;
+                document.getElementById('location').innerText = `${data.country_name}, ${data.city}`;
+                document.getElementById('isp').innerText = data.org !== '—' ? data.org : `Джерело: ${data.source}`;
+            } else {
+                setGeoWarning();
+            }
+        }).catch(() => setGeoWarning());
 
-        function setAdblockWarning() {
-            document.getElementById('ip').innerText = "Заблоковано вашим AdBlock";
-            document.getElementById('location').innerText = "Неможливо визначити через захист браузера";
-            document.getElementById('isp').innerText = "Блокувальник реклами приховав провайдера";
+        function setGeoWarning() {
+            document.getElementById('ip').innerText = 'Не вдалося визначити (AdBlock або мережа)';
+            document.getElementById('location').innerText = 'Спробуйте вимкнути блокувальник реклами';
+            document.getElementById('isp').innerText = 'Або перевірте підключення до інтернету';
         }
     </script>
 
